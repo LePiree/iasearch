@@ -1,0 +1,28 @@
+# Supports de cours (non versionnés)
+slides/
+diapos/
+
+# Python
+__pycache__/
+*.py[oc]
+.venv/
+*.egg-info/
+build/
+wheels/
+
+# Node / Vite
+node_modules/
+dist/
+dist-ssr/
+*.local
+*.log
+
+# Éditeurs / OS
+.vscode/*
+!.vscode/launch.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Environnement
+.env

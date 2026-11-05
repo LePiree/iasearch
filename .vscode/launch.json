@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FastAPI (local)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["main:app", "--reload", "--port", "8000"],
+      "cwd": "${workspaceFolder}/fastapi-backend",
+      "python": "${workspaceFolder}/fastapi-backend/.venv/Scripts/python.exe",
+      "jinja": true
+    },
+    {
+      "name": "FastAPI (Remote Attach docker)",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": { "host": "localhost", "port": 5678 },
+      "pathMappings": [
+        { "localRoot": "${workspaceFolder}/fastapi-backend", "remoteRoot": "/app" }
+      ],
+      "justMyCode": true
+    }
+  ]
+}

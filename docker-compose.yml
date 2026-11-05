@@ -1,0 +1,73 @@
+services:
+  elasticsearch:
+    image: elasticsearch:9.3.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
+      - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      # garde les 2 modèles (embedding + rerank) chargés en même temps
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_NUM_PARALLEL=4
+    # Accès GPU NVIDIA : retirer ce bloc "deploy" si la machine n'a pas de GPU NVIDIA
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  backend:
+    build: ./fastapi-backend
+    container_name: fastapi-backend
+    ports:
+      - "8000:8000"
+      - "5678:5678" # debugpy (VSCode Remote Attach)
+    environment:
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+      - OLLAMA_HOST=http://ollama:11434
+      - EMBEDDING_MODEL=qwen3-embedding:0.6b
+      - RERANK_MODEL=qwen3.5:0.8b
+      - RERANK_THRESHOLD=0.4
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+
+  front:
+    build:
+      context: ./react-front
+      args:
+        - VITE_API_URL=http://localhost:8000
+    container_name: react-front
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  es_data:
+  ollama_data:
